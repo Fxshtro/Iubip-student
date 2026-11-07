@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ИУБиП</string>
+
+    <!-- Навигация -->
+    <string name="nav_schedule">Расписание</string>
+    <string name="nav_profile">О себе</string>
+
+    <!-- Экраны -->
+    <string name="screen_schedule_title">Расписание</string>
+    <string name="screen_profile_title">О себе</string>
+
+    <!-- Расписание: шапка -->
+    <string name="schedule_group">К3И1(9)</string>
+    <string name="schedule_week_range">Учебная неделя %1$s — %2$s</string>
+
+    <!-- Расписание: лента дней -->
+    <string name="weekday_short_mon">Пн</string>
+    <string name="weekday_short_tue">Вт</string>
+    <string name="weekday_short_wed">Ср</string>
+    <string name="weekday_short_thu">Чт</string>
+    <string name="weekday_short_fri">Пт</string>
+    <string name="weekday_short_sat">Сб</string>
+    <string name="weekday_short_sun">Вс</string>
+    <string name="weekday_full_mon">Понедельник</string>
+    <string name="weekday_full_tue">Вторник</string>
+    <string name="weekday_full_wed">Среда</string>
+    <string name="weekday_full_thu">Четверг</string>
+    <string name="weekday_full_fri">Пятница</string>
+    <string name="weekday_full_sat">Суббота</string>
+    <string name="weekday_full_sun">Воскресенье</string>
+    <string name="schedule_today_caption">Сегодня, %1$s</string>
+    <string name="schedule_day_caption">%1$s, %2$s</string>
+    <string name="cd_day_chip">Выбрать день: %1$s, %2$d</string>
+
+    <!-- Расписание: карточка пары -->
+    <string name="schedule_pair_number">%1$d-я пара</string>
+    <string name="cd_pair_teacher">Преподаватель</string>
+    <string name="cd_pair_room">Аудитория</string>
+
+    <!-- Расписание: состояния -->
+    <string name="schedule_no_pairs">Пар нет</string>
+    <string name="schedule_no_pairs_hint">В этот день в колледже нечего посещать</string>
+    <string name="schedule_not_published">Расписание на эту дату не выложено</string>
+    <string name="schedule_not_published_hint">Выберите другой день в календаре</string>
+    <string name="schedule_no_data">Расписание ещё не выложено</string>
+    <string name="schedule_loading">Загружаем расписание…</string>
+    <string name="schedule_error">Не удалось загрузить расписание</string>
+    <string name="schedule_retry">Повторить</string>
+
+    <!-- Расписание: календарь -->
+    <string name="cd_open_calendar">Открыть календарь</string>
+    <string name="calendar_title">Выберите дату</string>
+    <string name="calendar_legend_unavailable">Серым — расписания нет</string>
+    <string name="cd_calendar_previous_month">Предыдущий месяц</string>
+    <string name="cd_calendar_next_month">Следующий месяц</string>
+    <string name="cd_calendar_close">Закрыть календарь</string>
+    <string name="cd_day_cell">%1$s</string>
+    <string name="cd_day_cell_unavailable">%1$s, расписания нет</string>
+    <string name="cd_day_cell_empty">%1$s, пар нет</string>
+    <string name="cd_day_cell_other_month">%1$s, другой месяц</string>
+
+    <!-- Расписание: лента недель -->
+    <string name="cd_week_swipe">Свайп влево или вправо — соседняя неделя</string>
+
+    <!-- Описания для доступности -->
+    <string name="cd_icon_schedule">Иконка раздела «Расписание»</string>
+    <string name="cd_icon_profile">Иконка раздела «О себе»</string>
+
+    <!-- Экран «О себе» (профиль) -->
+    <string name="cd_profile_avatar">Аватар пользователя</string>
+    <string name="profile_group_format">Группа %1$s</string>
+    <string name="profile_field_email">Адрес электронной почты</string>
+    <string name="profile_field_country">Страна</string>
+    <string name="profile_field_city">Город</string>
+    <string name="profile_field_time_zone">Часовой пояс</string>
+</resources>

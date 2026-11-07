@@ -1,0 +1,42 @@
+# --- Android Studio / IntelliJ ---
+*.iml
+.idea/
+captures/
+.navigation/
+.release/
+app/release/
+
+# --- Gradle ---
+.gradle/
+build/
+.kotlin/
+gradle-app.setting
+.gradletasknamecache
+
+# --- Локальные настройки (путь к Android SDK у каждого свой) ---
+local.properties
+
+# --- Собранные артефакты ---
+*.apk
+*.aab
+*.jar
+!.gradle/wrapper/gradle-wrapper.jar
+
+# --- Логи и отчёты ---
+*.log
+*.hprof
+reports/
+test-results/
+
+# --- Секреты и подписи ---
+*.jks
+*.keystore
+keystore.properties
+.env
+.env.*
+
+# --- ОС ---
+.DS_Store
+Thumbs.db
+desktop.ini
+*~
