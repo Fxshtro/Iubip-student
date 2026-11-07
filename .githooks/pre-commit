@@ -1,0 +1,13 @@
+#!/bin/sh
+# Запрещает коммитить мусор, если он всё же оказался в индексе.
+BLOCKED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^(local\.properties|\.gradle/|build/|app/build/|\.kotlin/)|\.(apk|aab|log|hprof|jks|keystore)$' | head -5)
+if [ -n "$BLOCKED" ]; then
+  echo ""
+  echo "  ✗ В коммит попадают файлы, которых там быть не должно:"
+  printf '%s\n' "$BLOCKED" | sed 's/^/    /'
+  echo ""
+  echo "    Убери их: git reset HEAD <файл>"
+  echo ""
+  exit 1
+fi
+exit 0

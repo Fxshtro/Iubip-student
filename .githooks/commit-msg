@@ -1,0 +1,32 @@
+#!/bin/sh
+# Проверка формата сообщения коммита.
+# Разрешённые типы: feat, fix, docs, style, refactor, test, chore, perf, build
+# Формат: <тип>(<область>)?: <описание с маленькой буквы>
+# Заголовок — до 72 символов. Merge-коммиты проверку не проходят.
+MSG_FILE="$1"
+FIRST_LINE=$(head -n 1 "$MSG_FILE")
+
+case "$FIRST_LINE" in
+  Merge*|Merge\ *) exit 0 ;;
+  Revert*) exit 0 ;;
+esac
+
+if ! printf '%s' "$FIRST_LINE" | grep -qE '^(feat|fix|docs|style|refactor|test|chore|perf|build)(\([a-z0-9-]+\))?: .+'; then
+  echo ""
+  echo "  ✗ Неверный формат сообщения коммита."
+  echo ""
+  echo "    Было: $FIRST_LINE"
+  echo "    Надо: <тип>(<область>): <что сделано>"
+  echo "    Типы: feat, fix, docs, style, refactor, test, chore, perf, build"
+  echo "    Пример: feat(schedule): календарь выбора даты"
+  echo ""
+  exit 1
+fi
+
+LEN=$(printf '%s' "$FIRST_LINE" | wc -m)
+if [ "$LEN" -gt 72 ]; then
+  echo "  ✗ Заголовок коммита длиннее 72 символов ($LEN). Сократи."
+  exit 1
+fi
+
+exit 0
