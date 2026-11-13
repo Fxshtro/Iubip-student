@@ -51,6 +51,7 @@
     <!-- Расписание: календарь -->
     <string name="cd_open_calendar">Открыть календарь</string>
     <string name="calendar_title">Выберите дату</string>
+    <string name="calendar_column_title">Календарь</string>
     <string name="calendar_legend_unavailable">Серым — расписания нет</string>
     <string name="cd_calendar_previous_month">Предыдущий месяц</string>
     <string name="cd_calendar_next_month">Следующий месяц</string>

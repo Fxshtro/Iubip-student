@@ -6,8 +6,11 @@
 MSG_FILE="$1"
 FIRST_LINE=$(head -n 1 "$MSG_FILE")
 
+# Коммит, завершающий слияние, проверять не нужно.
+if [ -f "$(git rev-parse --git-dir)/MERGE_HEAD" ]; then exit 0; fi
+
 case "$FIRST_LINE" in
-  Merge*|Merge\ *) exit 0 ;;
+  *Merge*|Merge*) exit 0 ;;
   Revert*) exit 0 ;;
 esac
 
@@ -30,3 +33,6 @@ if [ "$LEN" -gt 72 ]; then
 fi
 
 exit 0
+
+# При завершении слияния git пишет MERGE_MSG; такой коммит не проверяем.
+if [ -f "$(git rev-parse --git-dir)/MERGE_HEAD" ]; then exit 0; fi

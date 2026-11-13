@@ -1,6 +1,7 @@
 package ru.iubip.student.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -16,10 +17,12 @@ import ru.iubip.student.R
 import ru.iubip.student.ui.icons.PhosphorIcons
 
 /**
- * Круглая заглушка аватарки (как в Moodle): серый круг с силуэтом человека.
+ * Круглая заглушка аватарки: светлый круг с тонким контуром и контурным силуэтом.
  *
- * Цвета берутся только из темы: фон — `surfaceVariant`, силуэт — `onSurfaceVariant`,
- * поэтому в светлой и тёмной теме заглушка остаётся нейтральной.
+ * Силуэт намеренно не залитый и некрупный: заглушка не должна перетягивать внимание
+ * с ФИО. Цвета — только из темы: фон `surface`, тонкий контур `outlineVariant`,
+ * силуэт `onSurfaceVariant` с прозрачностью 45% (`outline` для этого не годится —
+ * в светлой схеме он почти белый, `#DCE0E6`).
  *
  * @param size диаметр круга, по умолчанию 96 dp
  */
@@ -31,15 +34,17 @@ fun ProfileAvatarPlaceholder(
     Box(
         modifier = modifier
             .size(size)
-            .background(MaterialTheme.colorScheme.surfaceVariant, CircleShape),
+            .background(MaterialTheme.colorScheme.surface, CircleShape)
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            imageVector = PhosphorIcons.Fill.User,
+            imageVector = PhosphorIcons.Thin.User,
             contentDescription = stringResource(R.string.cd_profile_avatar),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            // Силуэт занимает примерно половину круга, как заглушка Moodle.
-            modifier = Modifier.size(size * 0.56f),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f),
+            // Контурный силуэт чуть меньше половины круга: спокойная заглушка,
+            // а не «жирное пятно» по центру экрана.
+            modifier = Modifier.size(size * 0.46f),
         )
     }
 }

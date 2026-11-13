@@ -36,11 +36,19 @@ private val TIME_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm"
  * Сверху время «08:30–10:05» и справа «1-я пара» второстепенным цветом,
  * затем тип занятия «лек.» / «пр.», полужирный предмет, ниже преподаватель и аудитория
  * с маленькими контурными иконками. Без тени и цветной пометки типа занятия.
+ *
+ * В плотном режиме ([compact]) уменьшены только внутренние вертикальные отступы
+ * (12 dp вместо 14 dp, зазор 4 dp вместо 6 dp) — на горизонтальном телефоне помещается
+ * заметно больше пар. Порядок и иерархия строк не меняются.
+ *
+ * @param pair пара для отображения
+ * @param compact плотная карточка для горизонтали/планшета
  */
 @Composable
 fun PairCard(
     pair: ClassPair,
     modifier: Modifier = Modifier,
+    compact: Boolean = false,
 ) {
     val secondary = MaterialTheme.colorScheme.onSurfaceVariant
     val timeRange = formatRange(pair.start, pair.end)
@@ -53,8 +61,11 @@ fun PairCard(
         shadowElevation = 0.dp,
     ) {
         Column(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
+            modifier = Modifier.padding(
+                horizontal = 16.dp,
+                vertical = if (compact) 12.dp else 14.dp,
+            ),
+            verticalArrangement = Arrangement.spacedBy(if (compact) 4.dp else 6.dp),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
