@@ -69,3 +69,11 @@ internal val DarkOnErrorContainer = Color(0xFFFFDAD6)
 /** Активная «таблетка» в ленте дней и нижней панели — accent с прозрачностью ~12%. */
 internal val AccentPillLight = LightPrimary.copy(alpha = 0.12f)
 internal val AccentPillDark = DarkPrimary.copy(alpha = 0.16f)
+
+/** Зелёный индикатор «данные актуальны» (доступный контраст на светлом/тёмном фоне). */
+internal val StatusOkLight = Color(0xFF1B7F4B)
+internal val StatusOkDark = Color(0xFF66D69A)
+
+/** Жёлтый индикатор «данные из кеша, обновить не удалось». */
+internal val StatusWarningLight = Color(0xFFB26A00)
+internal val StatusWarningDark = Color(0xFFFFC861)

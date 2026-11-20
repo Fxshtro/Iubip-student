@@ -78,20 +78,28 @@ private val DarkColors = darkColorScheme(
  *
  * @param accentPill заливка активной «таблетки» (primary с прозрачностью ~12%)
  * @param divider тонкая линия-разделитель (например, верхняя граница нижней панели)
+ * @param statusOk зелёный: данные только что загружены с сайта
+ * @param statusWarning жёлтый: данные есть, но из кеша (сеть недоступна)
  */
 data class IubipExtraColors(
     val accentPill: Color,
     val divider: Color,
+    val statusOk: Color,
+    val statusWarning: Color,
 )
 
 private val LightExtraColors = IubipExtraColors(
     accentPill = AccentPillLight,
     divider = LightOutline,
+    statusOk = StatusOkLight,
+    statusWarning = StatusWarningLight,
 )
 
 private val DarkExtraColors = IubipExtraColors(
     accentPill = AccentPillDark,
     divider = DarkOutline,
+    statusOk = StatusOkDark,
+    statusWarning = StatusWarningDark,
 )
 
 internal val LocalIubipColors = staticCompositionLocalOf { LightExtraColors }

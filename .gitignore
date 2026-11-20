@@ -35,6 +35,10 @@ keystore.properties
 .env
 .env.*
 
+# --- Node.js (локальный шлюз gateway/) ---
+node_modules/
+npm-debug.log*
+
 # --- ОС ---
 .DS_Store
 Thumbs.db

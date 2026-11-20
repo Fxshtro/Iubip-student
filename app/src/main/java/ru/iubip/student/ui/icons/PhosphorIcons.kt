@@ -78,6 +78,25 @@ object PhosphorIcons {
         val X: ImageVector by lazy {
             vector(R.drawable.ic_phosphor_x_regular, "PhosphorXRegular")
         }
+
+        /** Ползунки настроек — плавающая кнопка «пульт выбора группы». */
+        val SlidersHorizontal: ImageVector by lazy {
+            vector(
+                R.drawable.ic_phosphor_sliders_horizontal_regular,
+                "PhosphorSlidersHorizontalRegular",
+            )
+        }
+
+        /** Индикаторы актуальности данных в шапке расписания. */
+        val Check: ImageVector by lazy {
+            vector(R.drawable.ic_phosphor_check_regular, "PhosphorCheckRegular")
+        }
+        val WarningCircle: ImageVector by lazy {
+            vector(R.drawable.ic_phosphor_warning_circle_regular, "PhosphorWarningCircleRegular")
+        }
+        val CircleDashed: ImageVector by lazy {
+            vector(R.drawable.ic_phosphor_circle_dashed_regular, "PhosphorCircleDashedRegular")
+        }
     }
 
     /** Заполненные иконки — активное состояние нижней панели. */
@@ -163,5 +182,13 @@ private object PhosphorPathData {
             "M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z",
         R.drawable.ic_phosphor_x_regular to
             "M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z",
+        R.drawable.ic_phosphor_sliders_horizontal_regular to
+            "M40,88H73a32,32,0,0,0,62,0h81a8,8,0,0,0,0-16H135a32,32,0,0,0-62,0H40a8,8,0,0,0,0,16Zm64-24A16,16,0,1,1,88,80,16,16,0,0,1,104,64ZM216,168H199a32,32,0,0,0-62,0H40a8,8,0,0,0,0,16h97a32,32,0,0,0,62,0h17a8,8,0,0,0,0-16Zm-48,24a16,16,0,1,1,16-16A16,16,0,0,1,168,192Z",
+        R.drawable.ic_phosphor_check_regular to
+            "M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z",
+        R.drawable.ic_phosphor_warning_circle_regular to
+            "M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm-8-80V80a8,8,0,0,1,16,0v56a8,8,0,0,1-16,0Zm20,36a12,12,0,1,1-12-12A12,12,0,0,1,140,172Z",
+        R.drawable.ic_phosphor_circle_dashed_regular to
+            "M96.26,37.05A8,8,0,0,1,102,27.29a104.11,104.11,0,0,1,52,0,8,8,0,0,1-2,15.75,8.15,8.15,0,0,1-2-.26,88.09,88.09,0,0,0-44,0A8,8,0,0,1,96.26,37.05ZM53.79,55.14a104.05,104.05,0,0,0-26,45,8,8,0,0,0,15.42,4.27,88,88,0,0,1,22-38.09A8,8,0,0,0,53.79,55.14ZM43.21,151.55a8,8,0,1,0-15.42,4.28,104.12,104.12,0,0,0,26,45,8,8,0,0,0,11.41-11.22A88.14,88.14,0,0,1,43.21,151.55ZM150,213.22a88,88,0,0,1-44,0,8,8,0,1,0-4,15.49,104.11,104.11,0,0,0,52,0,8,8,0,0,0-4-15.49ZM222.65,146a8,8,0,0,0-9.85,5.58,87.91,87.91,0,0,1-22,38.08,8,8,0,1,0,11.42,11.21,104,104,0,0,0,26-45A8,8,0,0,0,222.65,146Zm-9.86-41.54a8,8,0,0,0,15.42-4.28,104,104,0,0,0-26-45,8,8,0,1,0-11.41,11.22A88,88,0,0,1,212.79,104.45Z",
     )
 }

@@ -1,12 +1,16 @@
 # AGENTS.md — IubipApp
 
-Android-приложение (студенческий проект ИУБиП). Текущий этап: экран «Расписание»
-работает на локальных тестовых данных (JSON в `res/raw`), экран «О себе» — на тестовых
-данных профиля; оба оформлены в дизайне с акцентом #0F48AD. Сеть, кеш, выбор группы — следующие этапы.
+Android-приложение (студенческий проект ИУБиП). Экран «Расписание» работает на локальных
+тестовых данных (JSON в `res/raw`) и, через временный пульт, на живом расписании iubip.ru
+(собственный Node.js-шлюз + локальный кеш); экран «О себе» — на тестовых данных профиля;
+оба оформлены в дизайне с акцентом #0F48AD.
 
-> **Статус данных:** тестовые пары сгенерированы (2 недели, прошлая удалена намеренно), группа К3И1(9) — в шапке;
-> реальные данные не подключены. Календарь выбора даты и листание неделями — СДЕЛАНО (см. «Календарь и недели»).
-> Профиль (`ProfileSample.kt`) — тестовые ФИО и поля, источником позже станет личный кабинет Moodle.
+> **Статус данных:** по умолчанию старт — тестовые пары К3И1(9) (2 недели, прошлая удалена
+> намеренно). Пульт позволяет выбрать группу с сайта: данные идут через `gateway/`,
+> кэшируются и показываются без сети. Календарь выбора даты и листание неделями — СДЕЛАНО.
+> Профиль (`ProfileSample.kt`) — тестовые ФИО и поля, источником позже станет Moodle.
+> **Пульт временный:** выбор группы НЕ сохраняется как настройка; сохранён только кеш
+> публичного расписания, чтобы оно работало офлайн.
 
 ## Стек и версии
 
@@ -31,6 +35,10 @@ Android-приложение (студенческий проект ИУБиП).
 ```
 .
 ├── AGENTS.md
+├── gateway/                   # Node.js-шлюз iubip.ru (без зависимостей, только http+fetch)
+│   ├── server.js              # GET /api/groups и /api/schedule?group=..., CORS *, PORT
+│   ├── package.json           # без зависимостей, Node.js 18+
+│   └── README.md              # запуск, endpoints, примеры curl
 ├── settings.gradle.kts        # rootProject.name = "IubipApp", модуль :app
 ├── build.gradle.kts           # плагины объявлены с apply false (в т.ч. kotlin.serialization)
 ├── gradle/libs.versions.toml  # единый источник версий (version catalog)
@@ -49,6 +57,9 @@ Android-приложение (студенческий проект ИУБиП).
         │   ├── data/                      # слой данных (экран его не знает)
         │   │   ├── ScheduleRepository.kt          # interface: schedule(group) + table(group)
         │   │   ├── DefaultScheduleRepository.kt   # источник → JSON → парсер
+        │   │   ├── CachedScheduleRepository.kt    # кеш → сеть, статус Fresh/Stale/Waiting
+        │   │   ├── ScheduleCacheStore.kt          # SharedPreferences: сырой JSON + время + группа
+        │   │   ├── GroupsRepository.kt            # interface + RemoteGroupsRepository (академии/группы)
         │   │   ├── CalendarAvailability.kt        # доступность дат для календаря (чистые функции)
         │   │   ├── BellSchedule.kt                # ТАБЛИЦА ЗВОНОКОВ (единственное место)
         │   │   ├── ServiceLocator.kt              # ручной DI: репозиторий по Context
@@ -56,6 +67,7 @@ Android-приложение (студенческий проект ИУБиП).
         │   │   └── source/
         │   │       ├── ScheduleSource.kt          # fun interface: строку JSON → suspend load(group)
         │   │       ├── RawScheduleSource.kt       # реализация: чтение res/raw
+        │   │       ├── RemoteScheduleSource.kt    # HTTP GET шлюза (HttpURLConnection), сохраняет кеш
         │   │       ├── WeekSchedule.kt            # неделя: группа + понедельник + 7 дней
         │   │       ├── ScheduleTable.kt           # ВСЕ недели группы (таблица, dates/dayFor)
         │   │       └── JsonScheduleParser.kt      # разбор ответа сайта: parse(одна) / parseAll(все)
@@ -74,7 +86,9 @@ Android-приложение (студенческий проект ИУБиП).
         │       │   │   └── ProfileSample.kt       # Profile + тестовые данные SampleProfile
         │       │   └── schedule/
         │       │       ├── ScheduleScreen.kt      # ScheduleScreen + ScheduleContent (шапка+кнопка календаря, лента, список, лист)
-        │       │       ├── ScheduleViewModel.kt   # ScheduleUiState (StateFlow): таблица, неделя, дата; load/selectDate/goToWeek/onUserSwipe*
+        │       │       ├── ScheduleViewModel.kt   # ScheduleUiState (StateFlow): таблица, неделя, дата; load/selectGroup/selectDate/goToWeek/onUserSwipe*
+        │       │       ├── GroupPickerSheet.kt    # плавающая кнопка «пульт» + лист выбора группы с поиском
+        │       │       ├── FreshnessIndicator.kt  # индикатор Fresh/Stale/Waiting + диалог объяснения
         │       │       ├── WeekDayStrip.kt        # лента недели Пн..Вс на HorizontalPager, одна страница = неделя
         │       │       ├── PairCard.kt            # карточка пары + formatRange()
         │       │       └── calendar/              # лист календаря
@@ -87,7 +101,7 @@ Android-приложение (студенческий проект ИУБиП).
         │   ├── data/CalendarAvailabilityTest.kt       # состояния дат, границы ноября 2026
         │   ├── data/DefaultScheduleRepositoryTest.kt  # table() и schedule() на тестовом файле
         │   ├── data/source/JsonScheduleParserTest.kt  # разбор всех недель, неполные данные
-        │   └── ui/screens/schedule/ScheduleViewModelTest.kt # неделя/дата в VM: выбор, свайп, границы (34 теста всего)
+        │   └── ui/screens/schedule/ScheduleViewModelTest.kt # неделя/дата в VM: выбор, свайп, границы + selectGroup
         └── res/
             ├── raw/schedule_k3i1_9.json   # тестовое расписание К3И1(9): ДВЕ недели, формат сайта
             ├── values/strings.xml         # ВСЕ строки интерфейса (ru)
@@ -165,7 +179,8 @@ Android-приложение (студенческий проект ИУБиП).
   «Монолитной серой» заливкой UI-календарь рисует именно `UNAVAILABLE`; `AVAILABLE_EMPTY`
   показывается как доступный день с пустым расписанием («Пар нет»).
 - **Тесты.** `app/src/test/java/...`, JUnit4 (`junit:junit:4.13.2` из version catalog), без Android
-  и Robolectric: `./gradlew testDebugUnitTest` (**34 теста**: 28 по данным + 6 по ViewModel).
+  и Robolectric: `./gradlew testDebugUnitTest` (**35 тестов**: 28 по данным + 6 по ViewModel
+  + 1 новый `ScheduleViewModelSelectGroupTest` на метод `selectGroup`).
   `ScheduleViewModelTest` — единственный, что зависит от `viewModelScope`: там подменяется
   `Dispatchers.Main` через `kotlinx-coroutines-test` (testImplementation, см. version catalog)
   и в ViewModel подаётся `initialState` с уже загруженной таблицей. Тесты разбора читают настоящий файл
@@ -174,10 +189,11 @@ Android-приложение (студенческий проект ИУБиП).
 
 ## Экран «Расписание»
 
-- Шапка: зашитая группа **К3И1(9)** (`R.string.schedule_group`), справа от неё в той же
-  строке — кнопка календаря (Phosphor `CalendarDots` regular, 24 dp, `onSurfaceVariant`,
+- Шапка: группа **К3И1(9)** на старте (`R.string.schedule_group`), после пульта — выбранная
+  группа с сайта; справа в той же строке — индикатор актуальности и кнопка календаря
+  (Phosphor `CalendarDots` regular, 24 dp, `onSurfaceVariant`,
   `contentDescription` `R.string.cd_open_calendar`, клик без ряби). Ниже подпись дня
-  («Сегодня, Пятница, 06 ноября» / «Вторник, 03 ноября»). Выбора группы нет.
+  («Сегодня, Пятница, 06 ноября» / «Вторник, 03 ноября»).
 - Лента дней — **одна неделя Пн–Вс** (`WeekDayStrip` на `HorizontalPager`, страница = неделя),
   активный день — таблетка `IubipTheme.colors.accentPill`, точка под числом — «сегодня».
   Старт: неделя, где идёт сегодня; дата — сегодня (или понедельник, если сегодня нет в данных).
@@ -284,6 +300,7 @@ Android-приложение (студенческий проект ИУБиП).
 - Все цвета — в `ui/theme/Color.kt`, схемы — в `Theme.kt` (`lightColorScheme`/`darkColorScheme`,
   `surfaceTint = Transparent`). Доп. токены `IubipTheme.colors` (`accentPill`, `divider`) через
   `LocalIubipColors`; `accentPill` = primary с прозрачностью 12% (`AccentPillLight`).
+  Дополнительно: `statusOk` / `statusWarning` (зелёный/жёлтый индикаторы кеша, токены в `Color.kt`).
 - Скругления — `ui/theme/Shape.kt`: `IubipShapes.Card` 18 dp, `Panel` 20 dp,
   `Small` 12 dp, `Pill` (percent 50 — кнопки/индикаторы в полную высоту).
 - Типографика — `Type.kt`: заголовок экрана `headlineLarge` 28 sp SemiBold, группа
@@ -613,8 +630,82 @@ pathData продублирован в `PhosphorIcons.kt` и в `res/drawable` �
 (неактивное состояние), `BottomDestination.iconSelected` = `PhosphorIcons.Fill.*`
 (активное). Проверено на эмуляторе: иконки рендерятся и красятся через `tint`.
 
+## Временный пульт выбора группы (тестовый инструмент)
+
+**Правило:** пульт временный. Выбор группы НЕ сохраняется между запусками как пользовательская
+настройка: никакого DataStore/SharedPreferences для выбранной группы. Единственное, что пишется
+на диск — кеш публичного расписания (см. ниже), чтобы оно открывалось без сети; имя группы в
+кеше — технические метаданные этого кеша, а не «запомненный пользовательский выбор».
+
+- **UI:** плавающая круглая кнопка 56 dp с Phosphor `SlidersHorizontal` (regular) в
+  `ui/screens/schedule/GroupPickerSheet.kt`. Кнопка — ОТДЕЛЬНЫЙ слой `Box(Modifier.fillMaxSize())`
+  в `ScheduleScreen` ПОВЕРХ контента, не часть вёрстки. В портрете — правый нижний угол над
+  нижней панелью; в широком окне (панель справа) — левый нижний угол, чтобы не перекрывать
+  календарь-колонку. Не добавлять вкладку в навигацию.
+- **Лист:** `ModalBottomSheet` («Выбрать группу»), поиск (`TextField`) фильтрует по подстроке
+  без учёта регистра, список сгруппирован по академиям (`AcademyGroups.name` → заголовок,
+  `groups` → строки). Загрузка — индикатор; ошибка — «Не удалось получить список групп» + повтор.
+- **Переключение источника:** `ServiceLocator.useRemote` (только в памяти, по умолчанию `false`).
+  При выборе группы экран выставляет `true`, передаёт в `ScheduleViewModel.selectGroup(name,
+  newRepository)` репозиторий из `ServiceLocator.cachedScheduleRepository(context)` и тем самым
+  меняет источник внутри уже существующего ViewModel. Шапка показывает имя группы КАК НА САЙТЕ
+  (например `К2И1(11),К3И1(9)`). При старте без кеша — как раньше, `К3И1(9)` на локальных данных.
+- **Сеть без зависимостей:** `RemoteScheduleSource` — `HttpURLConnection`, базовый URL
+  `http://10.0.2.2:3000` (эмулятор → хост). `GroupsRepository` / `RemoteGroupsRepository` —
+  `GET /api/groups`, разбор через уже подключённый kotlinx.serialization. OkHttp/Hilt не добавлялись.
+  В манифесте — `INTERNET` и `usesCleartextTraffic="true"` (локальный HTTP-шлюз).
+- **Новые иконки Phosphor:** `SlidersHorizontal`, `Check`, `WarningCircle`, `CircleDashed`
+  (regular, 256×256) — SVG из `phosphor-icons/core` → `res/drawable/ic_phosphor_*.xml` +
+  pathData в `PhosphorIcons.kt` (обе стороны обновлять вместе).
+
+## Шлюз iubip.ru (`gateway/`)
+
+Отдельное Node.js-приложение без зависимостей (только `node:http` + `fetch`, Node.js 18+).
+Запуск: `node gateway/server.js`, порт `3000` или `PORT`. CORS `*`, логи в stdout.
+
+| Endpoint | Ответ |
+|---|---|
+| `GET /api/groups` | `{ "academies": [ { "name": "…", "groups": ["…"] } ] }` — пересобирается из ответа сайта «академия → group→1» |
+| `GET /api/schedule?group=<имя>` | ответ сайта `do=schedule&group=…` **как есть**, без разбора (парсер в приложении) |
+| `GET /health` | `{ "status": "ok" }` |
+
+Сайт: `POST http://iubip.ru/local/templates/univer/include/schedule/ajax/read-file-groups.php`,
+заголовки `X-Requested-With: XMLHttpRequest`, `Cookie: beget=begetok`, тело `do=groups` /
+`do=schedule&group=<urlencoded>`. Перед первым POST шлюз делает «прогрев»
+`http://iubip.ru/schedule/?special_version=N` и берёт `Set-Cookie`; если ответ не JSON/пустой —
+повторяет с запасной cookie. Таймаут 15 с, ошибки — HTTP 502 с JSON. `node_modules` в `.gitignore`.
+
+## Кеш и индикатор актуальности
+
+- **Хранилище:** `ScheduleCacheStore` (`data/ScheduleCacheStore.kt`) — SharedPreferences
+  `schedule_cache`: сырой JSON ответа + `updatedAt` + имя группы для каждой группы и
+  `last_group` последнего успешного ответа. DataStore в проекте не подключён, новых зависимостей
+  не добавляли. Это НЕ настройка выбора группы, а только офлайн-копия публичного расписания.
+- **Загрузка:** `CachedScheduleRepository.loadWithStatus(group, onOutcome)` — двухфазная:
+  1) сразу читает кеш и показывает его (`LoadOutcome.Stale(updatedAt)`) или сообщает
+     `LoadOutcome.Waiting`, если кеша нет;
+  2) затем тянет сеть; успех → `LoadOutcome.Fresh`, кеш обновляется `RemoteScheduleSource`;
+     ошибка → уже показанный кеш остаётся, статус снова `Stale`. Если кеша нет и сеть упала —
+     экран показывает обычную заглушку ошибки.
+  `ScheduleViewModel` хранит `ScheduleUiState.freshness` и `lastUpdatedAt`. При `selectGroup`
+  статус сбрасывается в `Waiting`.
+- **Три состояния (`DataFreshness`):**
+  - `Fresh` — зелёная галочка `PhosphorIcons.Regular.Check` (`IubipTheme.colors.statusOk`),
+    данные только что загружены;
+  - `Stale` — жёлтый `PhosphorIcons.Regular.WarningCircle` (`statusWarning`), данные есть,
+    но из кеша (сеть недоступна или обновление ещё не прошло);
+  - `Waiting` — нейтральный `PhosphorIcons.Regular.CircleDashed` (`onSurfaceVariant`), данных нет.
+- **Размещение:** индикатор 20 dp в зоне 28 dp в слоте `action` `ScreenHeader` рядом с кнопкой
+  календаря; в широком режиме остаётся в строке заголовка справа от даты. По тапу — `AlertDialog`
+  «О расписании» с человеческим текстом: группа, время обновления (формат `d MMMM, HH:mm`,
+  локаль `ru`), что делать. Все строки — в `strings.xml` (`pult_status_*`, `cd_status_*`).
+- **Цвета:** зелёный/жёлтый определены ТОЛЬКО в `ui/theme/Color.kt`
+  (`StatusOkLight/Dark`, `StatusWarningLight/Dark`) и доступны как `IubipTheme.colors.statusOk` /
+  `.statusWarning`. В экранах HEX-кодов нет.
+
 ## Ограничения текущего этапа
 
-Нет моделей данных профиля из Moodle, сети, кеша, уведомлений, выбора группы
-и цветовых пометок типа занятия. `ScheduleScreen` показывает локальные тестовые данные,
-`ProfileScreen` — тестовые данные из `ProfileSample.kt`.
+Нет моделей данных профиля из Moodle, уведомлений, цветовых пометок типа занятия и логина LMS
+(отдельная задача). `ProfileScreen` — тестовые данные из `ProfileSample.kt`. Пульт — временный
+тестовый инструмент, выбор группы не сохраняется как настройка; сохраняется только кеш
+публичного расписания для работы без сети.

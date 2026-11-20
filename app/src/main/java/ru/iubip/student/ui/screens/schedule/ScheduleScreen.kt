@@ -46,6 +46,7 @@ import ru.iubip.student.data.model.ClassPair
 import ru.iubip.student.data.model.Day
 import ru.iubip.student.data.source.ScheduleTable
 import ru.iubip.student.data.source.WeekSchedule
+import ru.iubip.student.data.ServiceLocator
 import ru.iubip.student.ui.components.ContentColumn
 import ru.iubip.student.ui.components.currentWindowWidthDp
 import ru.iubip.student.ui.components.IconCircleButton
@@ -83,24 +84,42 @@ fun ScheduleScreen(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
+    val cachedGroup = remember { ServiceLocator.initialGroup(context.applicationContext) }
     val group = stringResource(R.string.schedule_group)
+    val startGroup = if (cachedGroup == ServiceLocator.START_GROUP) group else cachedGroup
     val viewModel: ScheduleViewModel = viewModel(
-        factory = ScheduleViewModel.factory(context.applicationContext, group),
+        key = startGroup,
+        factory = ScheduleViewModel.factory(context.applicationContext, startGroup),
     )
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val window = windowWidthSizeClass.toIubipWindowInfo()
+        .let { IubipWindowInfo.of(currentWindowWidthDp()) }
 
-    ScheduleContent(
-        state = state,
-        // Календарь-колонка решается по РЕАЛЬНОЙ ширине окна: класс `Expanded`
-        // начинается с 840 dp, и телефон в горизонтали попадает туда же.
-        window = windowWidthSizeClass.toIubipWindowInfo()
-            .let { IubipWindowInfo.of(currentWindowWidthDp()) },
-        onDateClick = viewModel::selectDate,
-        onUserSwipeNext = viewModel::onUserSwipeNext,
-        onUserSwipePrevious = viewModel::onUserSwipePrevious,
-        onRetry = viewModel::load,
-        modifier = modifier,
-    )
+    // Плавающая кнопка — ОТДЕЛЬНЫЙ слой поверх экрана, не часть вёрстки контента.
+    // Переключатель источника включается ТОЛЬКО здесь (при реальном выборе группы).
+    Box(modifier = modifier.fillMaxSize()) {
+        ScheduleContent(
+            state = state,
+            // Календарь-колонка решается по РЕАЛЬНОЙ ширине окна: класс `Expanded`
+            // начинается с 840 dp, и телефон в горизонтали попадает туда же.
+            window = window,
+            onDateClick = viewModel::selectDate,
+            onUserSwipeNext = viewModel::onUserSwipeNext,
+            onUserSwipePrevious = viewModel::onUserSwipePrevious,
+            onRetry = viewModel::load,
+            freshnessDetails = viewModel.freshnessDetails(),
+        )
+        GroupPickerOverlay(
+            navigationOnSide = window.isWide,
+            onGroupSelected = { name ->
+                ServiceLocator.useRemote = true
+                viewModel.selectGroup(
+                    name,
+                    ServiceLocator.cachedScheduleRepository(context.applicationContext),
+                )
+            },
+        )
+    }
 }
 
 /**
@@ -121,6 +140,7 @@ fun ScheduleScreen(
  * @param onUserSwipeNext свайп ленты влево — следующая неделя
  * @param onUserSwipePrevious свайп ленты вправо — предыдущая неделя
  * @param onRetry повтор загрузки после ошибки
+ * @param freshnessDetails данные для диалога индикатора актуальности
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -131,6 +151,7 @@ fun ScheduleContent(
     onUserSwipeNext: () -> Unit,
     onUserSwipePrevious: () -> Unit,
     onRetry: () -> Unit,
+    freshnessDetails: FreshnessDetails = FreshnessDetails(state.freshness, state.group, null),
     modifier: Modifier = Modifier,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -168,7 +189,10 @@ fun ScheduleContent(
                 ScreenHeader(
                     title = state.group,
                     subtitle = stringResource(R.string.schedule_loading),
-                    action = { CalendarButton(visible = false, onClick = {}) },
+                    action = {
+                        FreshnessIndicator(state.freshness, freshnessDetails)
+                        CalendarButton(visible = false, onClick = {})
+                    },
                     compact = compact,
                 )
                 Box(
@@ -184,7 +208,10 @@ fun ScheduleContent(
                 ScreenHeader(
                     title = state.group,
                     subtitle = stringResource(R.string.schedule_error),
-                    action = { CalendarButton(visible = false, onClick = {}) },
+                    action = {
+                        FreshnessIndicator(state.freshness, freshnessDetails)
+                        CalendarButton(visible = false, onClick = {})
+                    },
                     compact = compact,
                 )
                 CenteredMessage(
@@ -208,6 +235,7 @@ fun ScheduleContent(
                 inlineSubtitle = if (calendarInColumn) dayCaption(state.selectedDate) else null,
                 maxSubtitleLines = 1,
                 action = {
+                    FreshnessIndicator(state.freshness, freshnessDetails)
                     // Календарь уже на экране колонкой — лист ему не нужен.
                     CalendarButton(
                         visible = !calendarInColumn,

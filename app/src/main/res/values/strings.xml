@@ -33,6 +33,27 @@
     <string name="schedule_day_caption">%1$s, %2$s</string>
     <string name="cd_day_chip">Выбрать день: %1$s, %2$d</string>
 
+    <!-- Временный пульт выбора группы (режим источника данных — только в памяти) -->
+    <string name="cd_open_group_picker">Выбрать группу</string>
+    <string name="cd_group_picker_close">Закрыть выбор группы</string>
+    <string name="pult_title">Выбрать группу</string>
+    <string name="pult_search_hint">Поиск группы</string>
+    <string name="pult_search_clear">Очистить поиск</string>
+    <string name="pult_groups_error">Не удалось получить список групп</string>
+    <string name="pult_groups_empty">Группы не найдены</string>
+
+    <!-- Индикатор актуальности расписания -->
+    <string name="cd_status_fresh">Данные обновлены</string>
+    <string name="cd_status_stale">Устаревшие данные</string>
+    <string name="cd_status_waiting">Ожидание данных</string>
+    <string name="pult_status_title">О расписании</string>
+    <string name="pult_status_fresh">Группа %1$s. Данные загружены с сайта в %2$s. Всё актуально.</string>
+    <string name="pult_status_stale">Нет соединения. Показаны сохранённые данные для группы %1$s от %2$s. Проверьте интернет и обновите.</string>
+    <string name="pult_status_waiting">Для группы %1$s ещё нет данных. Дождитесь загрузки или проверьте соединение.</string>
+    <string name="pult_status_hint">Обновление выполняется автоматически при каждом открытии экрана.</string>
+    <string name="pult_status_ok">Понятно</string>
+    <string name="pult_status_time_unknown">неизвестное время</string>
+
     <!-- Расписание: карточка пары -->
     <string name="schedule_pair_number">%1$d-я пара</string>
     <string name="cd_pair_teacher">Преподаватель</string>
