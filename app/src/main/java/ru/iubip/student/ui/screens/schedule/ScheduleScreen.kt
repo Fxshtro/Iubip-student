@@ -95,29 +95,40 @@ fun ScheduleScreen(
     val window = windowWidthSizeClass.toIubipWindowInfo()
         .let { IubipWindowInfo.of(currentWindowWidthDp()) }
 
-    // Плавающая кнопка — ОТДЕЛЬНЫЙ слой поверх экрана, не часть вёрстки контента.
-    // Переключатель источника включается ТОЛЬКО здесь (при реальном выборе группы).
-    Box(modifier = modifier.fillMaxSize()) {
-        ScheduleContent(
-            state = state,
-            // Календарь-колонка решается по РЕАЛЬНОЙ ширине окна: класс `Expanded`
-            // начинается с 840 dp, и телефон в горизонтали попадает туда же.
-            window = window,
-            onDateClick = viewModel::selectDate,
-            onUserSwipeNext = viewModel::onUserSwipeNext,
-            onUserSwipePrevious = viewModel::onUserSwipePrevious,
-            onRetry = viewModel::load,
-            freshnessDetails = viewModel.freshnessDetails(),
+    var groupPickerVisible by remember { mutableStateOf(false) }
+    val groupsRepository: ru.iubip.student.data.GroupsRepository =
+        remember { ServiceLocator.groupsRepository() }
+
+    val onGroupSelected: (String) -> Unit = { name ->
+        groupPickerVisible = false
+        ServiceLocator.useRemote = true
+        viewModel.selectGroup(
+            name,
+            ServiceLocator.cachedScheduleRepository(context.applicationContext),
         )
-        GroupPickerOverlay(
-            navigationOnSide = window.isWide,
-            onGroupSelected = { name ->
-                ServiceLocator.useRemote = true
-                viewModel.selectGroup(
-                    name,
-                    ServiceLocator.cachedScheduleRepository(context.applicationContext),
-                )
-            },
+    }
+
+    ScheduleContent(
+        state = state,
+        modifier = modifier,
+        // Календарь-колонка решается по РЕАЛЬНОЙ ширине окна: класс `Expanded`
+        // начинается с 840 dp, и телефон в горизонтали попадает туда же.
+        window = window,
+        onDateClick = viewModel::selectDate,
+        onUserSwipeNext = viewModel::onUserSwipeNext,
+        onUserSwipePrevious = viewModel::onUserSwipePrevious,
+        onRetry = viewModel::load,
+        freshnessDetails = viewModel.freshnessDetails(),
+        onSelectGroup = { groupPickerVisible = true },
+    )
+
+    // Лист выбора группы открывается по стрелке в шапке (раньше — плавающей кнопкой).
+    // Переключатель источника включается ТОЛЬКО при реальном выборе группы.
+    if (groupPickerVisible) {
+        GroupPickerSheet(
+            repository = groupsRepository,
+            onDismiss = { groupPickerVisible = false },
+            onGroupSelected = onGroupSelected,
         )
     }
 }
@@ -152,6 +163,7 @@ fun ScheduleContent(
     onUserSwipePrevious: () -> Unit,
     onRetry: () -> Unit,
     freshnessDetails: FreshnessDetails = FreshnessDetails(state.freshness, state.group, null),
+    onSelectGroup: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -189,6 +201,9 @@ fun ScheduleContent(
                 ScreenHeader(
                     title = state.group,
                     subtitle = stringResource(R.string.schedule_loading),
+                    onTitleClick = onSelectGroup,
+                    titleIcon = PhosphorIcons.Regular.CaretDown,
+                    titleIconContentDescription = stringResource(R.string.cd_select_group),
                     action = {
                         FreshnessIndicator(state.freshness, freshnessDetails)
                         CalendarButton(visible = false, onClick = {})
@@ -208,6 +223,9 @@ fun ScheduleContent(
                 ScreenHeader(
                     title = state.group,
                     subtitle = stringResource(R.string.schedule_error),
+                    onTitleClick = onSelectGroup,
+                    titleIcon = PhosphorIcons.Regular.CaretDown,
+                    titleIconContentDescription = stringResource(R.string.cd_select_group),
                     action = {
                         FreshnessIndicator(state.freshness, freshnessDetails)
                         CalendarButton(visible = false, onClick = {})
@@ -229,6 +247,11 @@ fun ScheduleContent(
 
             ScreenHeader(
                 title = state.group,
+                // Название группы + стрелка вниз — единая кликабельная область: тап открывает
+                // тот же лист выбора группы. Слот action (индикатор + календарь) не трогаем.
+                onTitleClick = onSelectGroup,
+                titleIcon = PhosphorIcons.Regular.CaretDown,
+                titleIconContentDescription = stringResource(R.string.cd_select_group),
                 // В режиме календаря-колонки дата уходит вправо в строку с названием группы:
                 // ленты дней нет, дату пользователь видит в самом календаре.
                 subtitle = if (calendarInColumn) null else dayCaption(state.selectedDate),

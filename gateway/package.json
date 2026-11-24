@@ -2,7 +2,7 @@
   "name": "iubip-schedule-gateway",
   "version": "1.0.0",
   "private": true,
-  "description": "Локальный шлюз расписания iubip.ru для пульта выбора группы (без зависимостей, Node.js 18+).",
+  "description": "Локальный шлюз расписания iubip.ru: список групп из DBF (кэш + таймер) и живое расписание (без зависимостей, Node.js 18+).",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
