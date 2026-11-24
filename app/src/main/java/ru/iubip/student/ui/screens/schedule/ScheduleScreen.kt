@@ -11,7 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -374,7 +374,7 @@ private fun CalendarWithPairs(
                 contentPadding = padding,
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                items(pairs, key = { "${it.slot}-${it.subject}" }) { pair ->
+                itemsIndexed(pairs, key = { index, pair -> "${index}-${pair.slot}-${pair.subject}" }) { index, pair ->
                     PairCard(pair = pair, compact = compact)
                 }
             }
@@ -441,7 +441,7 @@ private fun PairList(
         contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        items(pairs, key = { "${it.slot}-${it.subject}" }) { pair ->
+        itemsIndexed(pairs, key = { index, pair -> "${index}-${pair.slot}-${pair.subject}" }) { index, pair ->
             PairCard(pair = pair, compact = compact)
         }
     }
