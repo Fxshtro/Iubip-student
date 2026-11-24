@@ -92,7 +92,7 @@ fun ScreenHeader(
                 modifier = if (onTitleClick != null) {
                     // Кликабельная область = только название + стрелка, без пустого места
                     // до слота action (индикатор/календарь остаются отдельными кнопками).
-                    titleModifier.weight(1f, fill = false)
+                    titleModifier.weight(1f)
                 } else {
                     // Раньше заголовок занимал всю строку — профиль не меняем.
                     Modifier.weight(1f)
@@ -117,11 +117,9 @@ fun ScreenHeader(
                     )
                 }
             }
-            if (onTitleClick != null) {
-                // Занимает остаток строки, чтобы слот action оставался прижатым вправо,
-                // но не входит в кликабельную область названия.
-                Spacer(Modifier.weight(1f))
-            }
+            // Без Spacer: название должно получать максимум ширины. Слот action
+            // прижимается к правому краю сам, а кликабельная область остаётся
+            // только у названия со стрелкой.
             if (inlineSubtitle != null) {
                 Text(
                     text = inlineSubtitle,
