@@ -141,8 +141,9 @@ internal fun MonthWeekdayHeader(modifier: Modifier = Modifier) {
  * Одна ячейка месяца.
  *
  * Дни соседних месяцев ([outOfMonth]) попадают в сетку только как хвост недели,
- * пересекающей месяц. Они выглядят как обычные дни (не серые плашки), но не нажимаются:
- * на своей странице они доступны как настоящие дни месяца.
+ * пересекающей месяц. Выглядят приглушённо, но нажимаются, если дата есть в выложенном
+ * расписании: пользователь должен иметь возможность выбрать 26–31 октября прямо
+ * с листа ноября, не перелистывая месяц назад.
  *
  * @param date дата ячейки
  * @param state доступность даты по правилам [ru.iubip.student.data.CalendarAvailability]
@@ -163,7 +164,9 @@ internal fun DayCell(
     onClick: () -> Unit,
 ) {
     val colors = MaterialTheme.colorScheme
-    val clickable = !outOfMonth && state.isSelectable
+    // outOfMonth НЕ блокирует тап: дата соседнего месяца может быть доступной
+    // (есть в выложенном расписании), и её нужно выбирать прямо отсюда.
+    val clickable = state.isSelectable
     val background = when {
         selected -> colors.primary
         // «Монолитная серая» плашка для дат, которых нет в выложенном расписании.
@@ -179,8 +182,8 @@ internal fun DayCell(
         selected -> colors.onPrimary
         state == DayAvailability.UNAVAILABLE -> colors.onSurfaceVariant.copy(alpha = UNAVAILABLE_NUMBER_ALPHA)
         state == DayAvailability.AVAILABLE_EMPTY -> colors.onSurface.copy(alpha = EMPTY_DAY_NUMBER_ALPHA)
-        // День соседнего месяца: доступен в своём месяце, здесь только как хвост недели.
-        outOfMonth -> colors.onSurface.copy(alpha = OUT_OF_MONTH_ALPHA)
+        // День соседнего месяца: чуть приглушён, но при клике читается нормально.
+        outOfMonth && state.isSelectable -> colors.onSurface.copy(alpha = OUT_OF_MONTH_ALPHA)
         else -> colors.onSurface
     }
     val description = stringResource(
