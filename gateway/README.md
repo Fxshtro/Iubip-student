@@ -1,25 +1,43 @@
 # Шлюз расписания iubip.ru
 
-Небольшое локальное Node.js-приложение (без зависимостей, только встроенные `http` и `fetch`,
-Node.js 18+) для временного «пультика» выбора группы. Приложение ходить на iubip.ru через
-него: так обходит CORS и не дублирует логику сайта в Android-коде.
+Небольшое локальное Node.js-приложение (без зависимостей, только встроенные `http`, `fetch`
+и `TextDecoder`, Node.js 18+) для выбора группы и живого расписания в Android-приложении.
+Приложение ходит на сайт через шлюз: так обходится CORS и не дублируется логика сайта.
+
+## Источник списка групп
+
+Группы берутся **напрямую из DBF-файла института** (кодировка cp1251):
+
+```
+https://iubip.ru/upload/iblock/ab7/vr7vuzn1u41ly0mmcs6tah16c2ytu59k.DBF
+```
+
+Из каждой записи читается поле `GROUP` (индекс 0), значение нормализуется (`trim()` +
+схлопывание последовательностей пробелов), список дедуплицируется и сортируется
+через `localeCompare('ru')`. Старый AJAX-запрос списка групп удалён.
+
+**Кэш с обновлением по таймеру.** При старте шлюз загружает список в память, затем
+обновляет его каждые **30 минут**. `GET /api/groups` отдаёт список из памяти мгновенно.
+Если обновление не удалось — старый список остаётся в памяти, а в ответе появляется
+поле `stale: true`. Если не удалась самая первая загрузка — `/api/groups` возвращает
+502 с понятным JSON, а `/health` продолжает отвечать `ok`.
 
 ## Запуск
 
 ```bash
 node gateway/server.js
 # Порт по умолчанию 3000, переопределяется: PORT=3001 node gateway/server.js
+# Интервал обновления групп (мс), по умолчанию 1800000:
+GROUPS_REFRESH_MS=10000 node gateway/server.js
 ```
 
-При старте шлюз делает «прогрев» `http://iubip.ru/schedule/?special_version=N` и получает
-cookie `beget=begetok` (запасной вариант — отправить её сразу). Если первый ответ сайта
-пустой или не JSON, запрос повторяется с cookie. Все действия логируются в stdout.
+Все действия логируются в stdout (включая результат каждого обновления).
 
 ## Endpoints
 
 | Метод | Путь | Что делает |
 |---|---|---|
-| GET | `/api/groups` | Список групп с сайта: `{ "academies": [ { "name": "Академия …", "groups": ["ПД101", …] } ] }` |
+| GET | `/api/groups` | `{ "academies": [ { "name": "Все группы", "groups": ["…"] } ], "stale": false }` — список из памяти |
 | GET | `/api/schedule?group=<название>` | Ответ сайта `do=schedule&group=…` **как есть**, без разбора (структура `{ "ГРУППА": [период, {неделя: […]}] }`) |
 | GET | `/health` | `{ "status": "ok" }` |
 | OPTIONS | любой | CORS preflight (`Access-Control-Allow-Origin: *`) |
@@ -27,8 +45,11 @@ cookie `beget=begetok` (запасной вариант — отправить �
 ## Примеры curl
 
 ```bash
-# Список академий и групп
-curl -s localhost:3000/api/groups | python3 -m json.tool | head -30
+# Список групп (из памяти, первые 5 + общее количество)
+curl -s localhost:3000/api/groups | python3 -c 'import json,sys; d=json.load(sys.stdin); g=d["academies"][0]["groups"]; print("всего:",len(g),"stale:",d.get("stale"),"первые 5:",g[:5])'
+
+# Проверка шлюза
+curl -s localhost:3000/health
 
 # Расписание группы (название кодируется автоматически)
 curl -sG --data-urlencode 'group=ПД201' localhost:3000/api/schedule | python3 -m json.tool | head -30
@@ -36,10 +57,13 @@ curl -sG --data-urlencode 'group=ПД201' localhost:3000/api/schedule | python3 
 
 ## Технические детали
 
-- Upstream: `POST http://iubip.ru/local/templates/univer/include/schedule/ajax/read-file-groups.php`
-  с телом `do=groups` или `do=schedule&group=<urlencoded>`, заголовками
-  `X-Requested-With: XMLHttpRequest` и `Cookie: beget=begetok`.
+- DBF reader — свой минимальный парсер dBase III/IV: заголовок 32 байта, дескрипторы
+  полей по 32 байта, записи фиксированной длины, флаг удаления `0x2A`. Читаются только
+  символьные (`C`) поля. npm-зависимостей нет, `node_modules` не создаётся.
+- Расписание: `POST http://iubip.ru/local/templates/univer/include/schedule/ajax/read-file-groups.php`
+  с телом запроса расписания (`schedule` + urlencoded-имя группы, как раньше),
+  заголовками `X-Requested-With: XMLHttpRequest`
+  и `Cookie: beget=begetok`. Перед первым POST — «прогрев» страницы для получения cookie.
 - Таймаут одного запроса — 15 с (через `AbortController`). Ошибки — HTTP 502 с JSON
   `{ "error": "..." }`, понятный лог в stdout.
-- Зависимостей нет: `npm install` не требуется, `node_modules` не создаётся.
-- Шлюз временный: не сохраняет выбор группы и не хранит никаких данных LMS.
+- Шлюз не сохраняет выбор группы и не хранит данных LMS; кэш живёт только в памяти процесса.

@@ -1,16 +1,17 @@
 # AGENTS.md — IubipApp
 
 Android-приложение (студенческий проект ИУБиП). Экран «Расписание» работает на локальных
-тестовых данных (JSON в `res/raw`) и, через временный пульт, на живом расписании iubip.ru
-(собственный Node.js-шлюз + локальный кеш); экран «О себе» — на тестовых данных профиля;
-оба оформлены в дизайне с акцентом #0F48AD.
+тестовых данных (JSON в `res/raw`) и, при выборе группы по стрелке в шапке, на живом
+расписании iubip.ru (собственный Node.js-шлюз + локальный кеш); экран «О себе» — на
+тестовых данных профиля; оба оформлены в дизайне с акцентом #0F48AD.
 
 > **Статус данных:** по умолчанию старт — тестовые пары К3И1(9) (2 недели, прошлая удалена
-> намеренно). Пульт позволяет выбрать группу с сайта: данные идут через `gateway/`,
-> кэшируются и показываются без сети. Календарь выбора даты и листание неделями — СДЕЛАНО.
+> намеренно). Стрелка вниз рядом с названием группы открывает лист выбора групп: список
+> приходит из DBF-файла института через `gateway/`, расписание кэшируется и показывается
+> без сети. Календарь выбора даты и листание неделями — СДЕЛАНО.
 > Профиль (`ProfileSample.kt`) — тестовые ФИО и поля, источником позже станет Moodle.
-> **Пульт временный:** выбор группы НЕ сохраняется как настройка; сохранён только кеш
-> публичного расписания, чтобы оно работало офлайн.
+> **Выбор группы не сохраняется как настройка**; на диск пишется только кеш публичного
+> расписания, чтобы оно работало офлайн.
 
 ## Стек и версии
 
@@ -36,9 +37,9 @@ Android-приложение (студенческий проект ИУБиП).
 .
 ├── AGENTS.md
 ├── gateway/                   # Node.js-шлюз iubip.ru (без зависимостей, только http+fetch)
-│   ├── server.js              # GET /api/groups и /api/schedule?group=..., CORS *, PORT
+│   ├── server.js              # GET /api/groups (DBF + кэш + таймер) и /api/schedule?group=..., CORS *, PORT
 │   ├── package.json           # без зависимостей, Node.js 18+
-│   └── README.md              # запуск, endpoints, примеры curl
+│   └── README.md              # запуск, DBF-источник, интервал, env, endpoints, примеры curl
 ├── settings.gradle.kts        # rootProject.name = "IubipApp", модуль :app
 ├── build.gradle.kts           # плагины объявлены с apply false (в т.ч. kotlin.serialization)
 ├── gradle/libs.versions.toml  # единый источник версий (version catalog)
@@ -87,7 +88,7 @@ Android-приложение (студенческий проект ИУБиП).
         │       │   └── schedule/
         │       │       ├── ScheduleScreen.kt      # ScheduleScreen + ScheduleContent (шапка+кнопка календаря, лента, список, лист)
         │       │       ├── ScheduleViewModel.kt   # ScheduleUiState (StateFlow): таблица, неделя, дата; load/selectGroup/selectDate/goToWeek/onUserSwipe*
-        │       │       ├── GroupPickerSheet.kt    # плавающая кнопка «пульт» + лист выбора группы с поиском
+        │       │       ├── GroupPickerSheet.kt    # лист выбора группы с поиском (триггер — стрелка в шапке)
         │       │       ├── FreshnessIndicator.kt  # индикатор Fresh/Stale/Waiting + диалог объяснения
         │       │       ├── WeekDayStrip.kt        # лента недели Пн..Вс на HorizontalPager, одна страница = неделя
         │       │       ├── PairCard.kt            # карточка пары + formatRange()
@@ -189,8 +190,11 @@ Android-приложение (студенческий проект ИУБиП).
 
 ## Экран «Расписание»
 
-- Шапка: группа **К3И1(9)** на старте (`R.string.schedule_group`), после пульта — выбранная
-  группа с сайта; справа в той же строке — индикатор актуальности и кнопка календаря
+- Шапка: группа **К3И1(9)** на старте (`R.string.schedule_group`), после выбора — выбранная
+  группа с сайта; **название + стрелка вниз — кликабельная область, тап открывает лист выбора
+  группы** (Phosphor `CaretDown` regular, 20 dp в портрете / 16 dp в compact,
+  `contentDescription` `R.string.cd_select_group`). Справа в той же строке — индикатор
+  актуальности и кнопка календаря
   (Phosphor `CalendarDots` regular, 24 dp, `onSurfaceVariant`,
   `contentDescription` `R.string.cd_open_calendar`, клик без ряби). Ниже подпись дня
   («Сегодня, Пятница, 06 ноября» / «Вторник, 03 ноября»).
@@ -284,12 +288,16 @@ Android-приложение (студенческий проект ИУБиП).
 `schedule_not_published` («Расписание на эту дату не выложено»),
 `schedule_not_published_hint`, `schedule_no_data` («Расписание ещё не выложено»).
 
-### `ScreenHeader` — слот действия
-`ScreenHeader(title, modifier, subtitle, maxSubtitleLines, action: (@Composable () -> Unit)? = null)`.
+### `ScreenHeader` — слот действия и выбор группы
+`ScreenHeader(title, modifier, subtitle, maxSubtitleLines, action: (@Composable () -> Unit)? = null,
+compact, inlineSubtitle, topGap, onTitleClick, titleIcon, titleIconContentDescription)`.
 Если `action != null`, заголовок и действие стоят в одной `Row` (заголовок `weight(1f)`,
 обрезается многоточием, действие прижато вправо). Без `action` шапка выглядит как раньше —
 профиль (`ProfileScreen`) не менялся. Правило: действия в шапке — только через этот слот,
 внутри `action` использовать `IconCircleButton` (48 dp зона, 24 dp иконка, без ряби).
+**Выбор группы:** `onTitleClick` + `titleIcon` делают название со стрелкой единой
+кликабельной областью; клик не перекрывает слот `action` (индикатор и календарь остаются).
+В `compact` (горизонталь) иконка 16 dp, адаптивность не ломается.
 
 ## Дизайн-токены
 
@@ -615,7 +623,7 @@ Hex-цветов в файлах профиля нет. Заглушка ава�
 | `ic_phosphor_door.xml` | regular | аудитория (на будущее) |
 | `ic_phosphor_clock.xml` | regular | часы / время пары (на будущее) |
 | `ic_phosphor_caret_left_regular.xml`, `ic_phosphor_caret_right_regular.xml` | regular | стрелки месяца в календаре |
-| `ic_phosphor_caret_down_regular.xml` | regular | стрелка «вниз» (запас для листов) |
+| `ic_phosphor_caret_down_regular.xml` | regular | стрелка «вниз» в шапке — выбор группы |
 | `ic_phosphor_x_regular.xml` | regular | закрыть лист календаря |
 
 В Kotlin они обёрнуты в `ImageVector` в `ui/icons/PhosphorIcons.kt`:
@@ -630,50 +638,63 @@ pathData продублирован в `PhosphorIcons.kt` и в `res/drawable` �
 (неактивное состояние), `BottomDestination.iconSelected` = `PhosphorIcons.Fill.*`
 (активное). Проверено на эмуляторе: иконки рендерятся и красятся через `tint`.
 
-## Временный пульт выбора группы (тестовый инструмент)
+## Выбор группы по стрелке в шапке
 
-**Правило:** пульт временный. Выбор группы НЕ сохраняется между запусками как пользовательская
-настройка: никакого DataStore/SharedPreferences для выбранной группы. Единственное, что пишется
-на диск — кеш публичного расписания (см. ниже), чтобы оно открывалось без сети; имя группы в
-кеше — технические метаданные этого кеша, а не «запомненный пользовательский выбор».
+**Правило:** выбор группы НЕ сохраняется между запусками как пользовательская настройка:
+никакого DataStore/SharedPreferences для выбранной группы. Единственное, что пишется
+на диск — кеш публичного расписания (см. ниже), чтобы оно открывалось без сети; имя группы
+в кеше — технические метаданные этого кеша, а не «запомненный пользовательский выбор».
 
-- **UI:** плавающая круглая кнопка 56 dp с Phosphor `SlidersHorizontal` (regular) в
-  `ui/screens/schedule/GroupPickerSheet.kt`. Кнопка — ОТДЕЛЬНЫЙ слой `Box(Modifier.fillMaxSize())`
-  в `ScheduleScreen` ПОВЕРХ контента, не часть вёрстки. В портрете — правый нижний угол над
-  нижней панелью; в широком окне (панель справа) — левый нижний угол, чтобы не перекрывать
-  календарь-колонку. Не добавлять вкладку в навигацию.
+- **Триггер:** стрелка вниз (Phosphor `CaretDown` regular) рядом с названием группы в
+  `ScreenHeader`. Всё название + стрелка — одна кликабельная область; слот `action` (индикатор
+  актуальности и кнопка календаря) остаётся отдельным и не перекрывается. В `compact`
+  (горизонталь) иконка 16 dp, в портрете 20 dp. Плавающей кнопки-«пульта» больше нет.
 - **Лист:** `ModalBottomSheet` («Выбрать группу»), поиск (`TextField`) фильтрует по подстроке
   без учёта регистра, список сгруппирован по академиям (`AcademyGroups.name` → заголовок,
   `groups` → строки). Загрузка — индикатор; ошибка — «Не удалось получить список групп» + повтор.
 - **Переключение источника:** `ServiceLocator.useRemote` (только в памяти, по умолчанию `false`).
   При выборе группы экран выставляет `true`, передаёт в `ScheduleViewModel.selectGroup(name,
   newRepository)` репозиторий из `ServiceLocator.cachedScheduleRepository(context)` и тем самым
-  меняет источник внутри уже существующего ViewModel. Шапка показывает имя группы КАК НА САЙТЕ
+  меняет источник внутри уже существующего ViewModel. Шапка показывает имя группы КАК В DBF
   (например `К2И1(11),К3И1(9)`). При старте без кеша — как раньше, `К3И1(9)` на локальных данных.
 - **Сеть без зависимостей:** `RemoteScheduleSource` — `HttpURLConnection`, базовый URL
   `http://10.0.2.2:3000` (эмулятор → хост). `GroupsRepository` / `RemoteGroupsRepository` —
   `GET /api/groups`, разбор через уже подключённый kotlinx.serialization. OkHttp/Hilt не добавлялись.
   В манифесте — `INTERNET` и `usesCleartextTraffic="true"` (локальный HTTP-шлюз).
-- **Новые иконки Phosphor:** `SlidersHorizontal`, `Check`, `WarningCircle`, `CircleDashed`
+- **Иконки Phosphor:** `CaretDown`, `Check`, `WarningCircle`, `CircleDashed`, `X`
   (regular, 256×256) — SVG из `phosphor-icons/core` → `res/drawable/ic_phosphor_*.xml` +
-  pathData в `PhosphorIcons.kt` (обе стороны обновлять вместе).
+  pathData в `PhosphorIcons.kt` (обе стороны обновлять вместе). `SlidersHorizontal` удалён
+  вместе с плавающей кнопкой.
 
 ## Шлюз iubip.ru (`gateway/`)
 
-Отдельное Node.js-приложение без зависимостей (только `node:http` + `fetch`, Node.js 18+).
-Запуск: `node gateway/server.js`, порт `3000` или `PORT`. CORS `*`, логи в stdout.
+Отдельное Node.js-приложение без зависимостей (только `node:http`, `fetch`, `TextDecoder`,
+Node.js 18+). Запуск: `node gateway/server.js`, порт `3000` или `PORT`. CORS `*`, логи в stdout.
+
+**Источник списка групп — DBF-файл института (cp1251), не AJAX:**
+`https://iubip.ru/upload/iblock/ab7/vr7vuzn1u41ly0mmcs6tah16c2ytu59k.DBF`
+Из записи читается поле `GROUP` (`record[0]`), значение нормализуется (`trim()` +
+схлопывание пробелов), список уникален и отсортирован через `localeCompare('ru')`.
+Свой минимальный dBase III/IV-парсер: заголовок 32 байта, дескрипторы полей по 32 байта,
+записи фиксированной длины, флаг удаления `0x2A`. npm-зависимостей нет.
+
+**Кэш:** при старте список грузится в память, затем обновляется каждые **30 минут**
+(константа `GROUPS_REFRESH_MS`, переопределяется env; для проверки таймера —
+`GROUPS_REFRESH_MS=10000`). `GET /api/groups` отдаёт из памяти мгновенно; при неудачном
+обновлении старый список остаётся и в ответе появляется `stale: true`; если не удалась
+первая загрузка — 502 с JSON (`/health` при этом всё равно `ok`).
 
 | Endpoint | Ответ |
 |---|---|
-| `GET /api/groups` | `{ "academies": [ { "name": "…", "groups": ["…"] } ] }` — пересобирается из ответа сайта «академия → group→1» |
+| `GET /api/groups` | `{ "academies": [ { "name": "Все группы", "groups": ["…"] } ], "stale": false }` — одна секция, список из памяти |
 | `GET /api/schedule?group=<имя>` | ответ сайта `do=schedule&group=…` **как есть**, без разбора (парсер в приложении) |
 | `GET /health` | `{ "status": "ok" }` |
 
-Сайт: `POST http://iubip.ru/local/templates/univer/include/schedule/ajax/read-file-groups.php`,
-заголовки `X-Requested-With: XMLHttpRequest`, `Cookie: beget=begetok`, тело `do=groups` /
-`do=schedule&group=<urlencoded>`. Перед первым POST шлюз делает «прогрев»
-`http://iubip.ru/schedule/?special_version=N` и берёт `Set-Cookie`; если ответ не JSON/пустой —
-повторяет с запасной cookie. Таймаут 15 с, ошибки — HTTP 502 с JSON. `node_modules` в `.gitignore`.
+Расписание: `POST http://iubip.ru/local/templates/univer/include/schedule/ajax/read-file-groups.php`,
+заголовки `X-Requested-With: XMLHttpRequest`, `Cookie: beget=begetok`, тело только для
+расписания. Перед первым POST шлюз делает «прогрев» `http://iubip.ru/schedule/?special_version=N`
+и берёт `Set-Cookie`; если ответ не JSON/пустой — повторяет с запасной cookie. Таймаут 15 с,
+ошибки — HTTP 502 с JSON. `node_modules` в `.gitignore`.
 
 ## Кеш и индикатор актуальности
 
@@ -706,6 +727,6 @@ pathData продублирован в `PhosphorIcons.kt` и в `res/drawable` �
 ## Ограничения текущего этапа
 
 Нет моделей данных профиля из Moodle, уведомлений, цветовых пометок типа занятия и логина LMS
-(отдельная задача). `ProfileScreen` — тестовые данные из `ProfileSample.kt`. Пульт — временный
-тестовый инструмент, выбор группы не сохраняется как настройка; сохраняется только кеш
-публичного расписания для работы без сети.
+(отдельная задача). `ProfileScreen` — тестовые данные из `ProfileSample.kt`. Выбор группы
+по стрелке не сохраняется как настройка; сохраняется только кеш публичного расписания
+для работы без сети.

@@ -33,8 +33,8 @@
     <string name="schedule_day_caption">%1$s, %2$s</string>
     <string name="cd_day_chip">Выбрать день: %1$s, %2$d</string>
 
-    <!-- Временный пульт выбора группы (режим источника данных — только в памяти) -->
-    <string name="cd_open_group_picker">Выбрать группу</string>
+    <!-- Выбор группы по стрелке в шапке расписания (режим источника данных — только в памяти) -->
+    <string name="cd_select_group">Выбрать группу</string>
     <string name="cd_group_picker_close">Закрыть выбор группы</string>
     <string name="pult_title">Выбрать группу</string>
     <string name="pult_search_hint">Поиск группы</string>

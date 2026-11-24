@@ -1,19 +1,16 @@
 package ru.iubip.student.ui.screens.schedule
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -32,12 +29,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import ru.iubip.student.R
@@ -46,79 +40,18 @@ import ru.iubip.student.data.GroupsRepository
 import ru.iubip.student.data.ServiceLocator
 import ru.iubip.student.ui.components.IconCircleButton
 import ru.iubip.student.ui.icons.PhosphorIcons
-import ru.iubip.student.ui.theme.IubipAppTheme
 import ru.iubip.student.ui.theme.IubipShapes
 
 /**
- * Временный «пульт»: плавающая кнопка и лист выбора группы поверх экрана расписания.
+ * Лист «Выбрать группу»: поиск, академии, ошибка/повтор.
  *
- * Кнопка НЕ является частью вёрстки контента — она живёт в отдельном слое `Box(Modifier.fillMaxSize())`
- * в [ScheduleScreen]. Отступ снизу/справа учитывает нижнюю или боковую панель навигации.
- *
- * Выбор НЕ сохраняется: он живёт только в состоянии ViewModel и флаге [ServiceLocator.useRemote].
+ * Триггер — стрелка вниз в шапке расписания: плавающей кнопки-«пульта» больше нет.
+ * Выбор НЕ сохраняется как настройка: он живёт только в состоянии ViewModel
+ * и флаге [ServiceLocator.useRemote].
  */
-@Composable
-fun GroupPickerOverlay(
-    onGroupSelected: (String) -> Unit,
-    modifier: Modifier = Modifier,
-    /** true — панель навигации справа (горизонталь/планшет): кнопка уходит в левый угол. */
-    navigationOnSide: Boolean = false,
-) {
-    var sheetVisible by remember { mutableStateOf(false) }
-    val repository: GroupsRepository = remember { ServiceLocator.groupsRepository() }
-
-    Box(modifier = modifier.fillMaxSize()) {
-        // Портрет: нижний правый угол над нижней панелью. Горизонталь: нижний ЛЕВЫЙ
-        // угол — справа находятся календарь-колонка и боковая панель навигации,
-        // там кнопка перекрывала бы дни календаря.
-        PultButton(
-            onClick = { sheetVisible = true },
-            modifier = Modifier
-                .align(if (navigationOnSide) Alignment.BottomStart else Alignment.BottomEnd)
-                .padding(
-                    start = if (navigationOnSide) 20.dp else 0.dp,
-                    end = if (navigationOnSide) 0.dp else 20.dp,
-                    bottom = if (navigationOnSide) 24.dp else 96.dp,
-                ),
-        )
-    }
-
-    if (sheetVisible) {
-        GroupPickerSheet(
-            repository = repository,
-            onDismiss = { sheetVisible = false },
-            onGroupSelected = { name ->
-                sheetVisible = false
-                onGroupSelected(name)
-            },
-        )
-    }
-}
-
-/** Компактная круглая кнопка 56 dp с иконкой «ползунков» Phosphor. */
-@Composable
-private fun PultButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier
-            .size(56.dp)
-            .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.primary)
-            .clickable(interactionSource = null, indication = null, role = Role.Button, onClick = onClick),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(
-            imageVector = PhosphorIcons.Regular.SlidersHorizontal,
-            contentDescription = stringResource(R.string.cd_open_group_picker),
-            tint = MaterialTheme.colorScheme.onPrimary,
-            modifier = Modifier.size(24.dp),
-        )
-    }
-}
-
-/** Лист «Выбрать группу»: поиск, академии, ошибка/повтор. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun GroupPickerSheet(
+fun GroupPickerSheet(
     repository: GroupsRepository,
     onDismiss: () -> Unit,
     onGroupSelected: (String) -> Unit,
@@ -275,21 +208,6 @@ private fun GroupPickerSheet(
                     }
                 }
             }
-        }
-    }
-}
-
-@Preview(name = "Пульт — кнопка", showBackground = true, widthDp = 393, heightDp = 120)
-@Composable
-private fun PultButtonPreview() {
-    IubipAppTheme {
-        Box(Modifier.fillMaxSize()) {
-            PultButton(
-                onClick = {},
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(end = 20.dp, bottom = 20.dp),
-            )
         }
     }
 }

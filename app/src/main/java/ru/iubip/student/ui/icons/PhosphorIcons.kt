@@ -79,14 +79,6 @@ object PhosphorIcons {
             vector(R.drawable.ic_phosphor_x_regular, "PhosphorXRegular")
         }
 
-        /** Ползунки настроек — плавающая кнопка «пульт выбора группы». */
-        val SlidersHorizontal: ImageVector by lazy {
-            vector(
-                R.drawable.ic_phosphor_sliders_horizontal_regular,
-                "PhosphorSlidersHorizontalRegular",
-            )
-        }
-
         /** Индикаторы актуальности данных в шапке расписания. */
         val Check: ImageVector by lazy {
             vector(R.drawable.ic_phosphor_check_regular, "PhosphorCheckRegular")
@@ -182,8 +174,6 @@ private object PhosphorPathData {
             "M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z",
         R.drawable.ic_phosphor_x_regular to
             "M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z",
-        R.drawable.ic_phosphor_sliders_horizontal_regular to
-            "M40,88H73a32,32,0,0,0,62,0h81a8,8,0,0,0,0-16H135a32,32,0,0,0-62,0H40a8,8,0,0,0,0,16Zm64-24A16,16,0,1,1,88,80,16,16,0,0,1,104,64ZM216,168H199a32,32,0,0,0-62,0H40a8,8,0,0,0,0,16h97a32,32,0,0,0,62,0h17a8,8,0,0,0,0-16Zm-48,24a16,16,0,1,1,16-16A16,16,0,0,1,168,192Z",
         R.drawable.ic_phosphor_check_regular to
             "M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z",
         R.drawable.ic_phosphor_warning_circle_regular to
